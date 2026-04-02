@@ -1,0 +1,14 @@
+/**
+ * CE.SDK T-Shirt Designer - App Layout Styles
+ */
+
+.app {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+.editor {
+  flex: 1;
+  height: 100%;
+}
