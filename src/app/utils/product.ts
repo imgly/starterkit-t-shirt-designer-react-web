@@ -1,130 +1,93 @@
 /**
- * Product Scene Utilities
- *
- * Functions for mapping product configurations to CE.SDK scene operations.
- * These utilities bridge the gap between product data and the generic
- * scene functions in imgly/.
+ * Product helpers used by App.tsx to bridge the product catalog
+ * with the `product.*` actions registered by the ProductBackdrop plugin.
  */
 
 import type CreativeEditorSDK from '@cesdk/cesdk-js';
 
-import {
-  createOrUpdateScene,
-  createBackdrop,
-  updateBackdropImages,
-  setMaskConfig,
-  updateMasks,
-  clearBackdrops,
-  clearMasks,
-  type Source
-} from '../../imgly';
-
 import type { ProductConfig, ProductColor } from '../product-catalog';
 
 /**
- * Apply color to backdrop image URLs.
- * Replaces {{color}} placeholder with actual color ID.
+ * Map a product + color to the narrow payload the
+ * `product.setupScene` action accepts.
  */
-export function applyColorToImages(
-  images: Source[],
-  colorId: string
-): Source[] {
-  return images.map((img) => ({
-    ...img,
-    uri: img.uri.replace('{{color}}', colorId)
-  }));
+export function setupSceneOptions(product: ProductConfig, color: ProductColor) {
+  return {
+    areas: product.areas
+      .filter((area) => !area.disabled)
+      .map((area) => ({
+        id: area.id,
+        pageSize: area.pageSize,
+        mockup: area.mockup
+      })),
+    designUnit: product.designUnit,
+    variables: { color: color.id }
+  };
 }
 
 /**
- * Set up the scene for a product.
- * Creates pages, backdrops, and masks from product configuration.
+ * Persist the current product and color on scene metadata so they
+ * survive scene reloads and can be recovered by handlers like
+ * `handleColorChange`.
  */
-export async function setupProductScene(
-  cesdk: CreativeEditorSDK,
-  product: ProductConfig,
-  color: ProductColor
-): Promise<void> {
-  const engine = cesdk.engine;
-  const enabledAreas = product.areas.filter((area) => !area.disabled);
-
-  // Clear masks before destroying pages (masks are children of pages)
-  clearMasks(engine);
-
-  // Check if any area has masks
-  const hasMasks = enabledAreas.some(
-    (area) => area.mockup?.editingMaskUrl || area.mockup?.exportingMaskUrl
-  );
-
-  // Create scene with pages
-  createOrUpdateScene(
-    engine,
-    enabledAreas.map((area) => ({
-      id: area.id,
-      pageSize: area.pageSize
-    })),
-    product.designUnit,
-    hasMasks
-  );
-
-  // Clear existing backdrops (in case of product change)
-  clearBackdrops(engine);
-
-  // Create backdrops and masks for each area
-  for (const area of enabledAreas) {
-    if (!area.mockup) continue;
-
-    // Create backdrop with color-applied images
-    const images = area.mockup.images
-      ? applyColorToImages(area.mockup.images, color.id)
-      : [];
-
-    createBackdrop(engine, area.id, {
-      images,
-      printableAreaPx: area.mockup.printableAreaPx
-    });
-
-    // Set mask config if area has masks
-    if (area.mockup.editingMaskUrl || area.mockup.exportingMaskUrl) {
-      setMaskConfig(engine, area.id, {
-        editingUrl: area.mockup.editingMaskUrl,
-        exportingUrl: area.mockup.exportingMaskUrl
-      });
-    }
-  }
-
-  // Apply editing masks
-  if (hasMasks) {
-    updateMasks(engine, 'editing');
-  }
-
-  // Store product data in scene metadata for reference
-  const scene = engine.scene.get();
-  if (scene != null) {
-    engine.block.setMetadata(scene, 'product', JSON.stringify(product));
-    engine.block.setMetadata(scene, 'color', JSON.stringify(color));
-  }
-}
-
-/**
- * Update backdrops for a color change.
- */
-export function updateProductColor(
+export function storeProductMetadata(
   cesdk: CreativeEditorSDK,
   product: ProductConfig,
   color: ProductColor
 ): void {
+  const scene = cesdk.engine.scene.get();
+  if (scene == null) return;
+  cesdk.engine.block.setMetadata(scene, 'product', JSON.stringify(product));
+  cesdk.engine.block.setMetadata(scene, 'color', JSON.stringify(color));
+}
+
+/**
+ * Export every product area as a printable PDF and a 200×200 PNG thumbnail,
+ * and trigger one browser download per file plus the scene archive.
+ * Mirrors the behaviour of the `product-editor-ui` showcase.
+ */
+export async function downloadProductAssets(
+  cesdk: CreativeEditorSDK
+): Promise<void> {
   const engine = cesdk.engine;
+  const archive = await engine.scene.saveToArchive();
+  const pages = engine.block.findByType('page');
+  const pdfs: Record<string, Blob> = {};
+  const thumbnails: Record<string, Blob> = {};
 
-  for (const area of product.areas.filter((item) => !item.disabled)) {
-    if (!area.mockup?.images) continue;
-
-    const images = applyColorToImages(area.mockup.images, color.id);
-    updateBackdropImages(engine, area.id, images);
+  for (const page of pages) {
+    const areaId = engine.block.getName(page);
+    // Temporarily disable page stroke so it doesn't appear in the export
+    engine.block.setStrokeEnabled(page, false);
+    pdfs[areaId] = await engine.block.export(page, {
+      mimeType: 'application/pdf'
+    });
+    thumbnails[areaId] = await engine.block.export(page, {
+      mimeType: 'image/png',
+      targetWidth: 200,
+      targetHeight: 200
+    });
+    engine.block.setStrokeEnabled(page, true);
   }
 
-  // Update stored color
-  const scene = engine.scene.get();
-  if (scene != null) {
-    engine.block.setMetadata(scene, 'color', JSON.stringify(color));
+  const timestamp = new Date().toISOString();
+  for (const [areaId, pdf] of Object.entries(pdfs)) {
+    localDownload(pdf, `scene-${timestamp}-${areaId}.pdf`);
   }
+  for (const [areaId, thumbnail] of Object.entries(thumbnails)) {
+    localDownload(thumbnail, `scene-thumbnail-${timestamp}-${areaId}.png`);
+  }
+  localDownload(archive, `scene-${timestamp}.zip`);
+}
+
+function localDownload(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.style.display = 'none';
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  URL.revokeObjectURL(url);
+  a.remove();
 }
