@@ -47,10 +47,10 @@ export interface ProductMockupConfig {
     width: number;
     height: number;
   };
-  /** Mask image shown during editing (e.g., for arrow sign shape) */
-  editingMaskUrl?: string;
-  /** Mask image used during export (e.g., for transparent areas) */
-  exportingMaskUrl?: string;
+  /**
+   * Optional SVG path. When set, the page is clipped to this shape.
+   */
+  pageShape?: string;
 }
 
 export interface ProductColor {
