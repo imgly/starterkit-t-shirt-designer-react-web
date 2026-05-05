@@ -12,10 +12,14 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import type CreativeEditorSDK from '@cesdk/cesdk-js';
 
-import { initTShirtDesigner, switchArea } from '../imgly';
+import { initTShirtDesigner } from '../imgly';
 
 import { PRODUCT_SAMPLES, ProductColor } from './product-catalog';
-import { setupProductScene, updateProductColor } from './utils/product';
+import {
+  setupSceneOptions,
+  storeProductMetadata,
+  downloadProductAssets
+} from './utils/product';
 import { Sidebar } from './Sidebar/Sidebar';
 import styles from './App.module.css';
 
@@ -53,10 +57,14 @@ export default function App({ cesdk, children }: AppProps) {
       const defaultColor =
         product.colors.find((color) => color.isDefault) || product.colors[0];
 
-      await setupProductScene(cesdk, product, defaultColor);
+      await cesdk.actions.run(
+        'product.setupScene',
+        setupSceneOptions(product, defaultColor)
+      );
+      storeProductMetadata(cesdk, product, defaultColor);
 
       // Switch to first area
-      await switchArea(cesdk, product.areas[0].id);
+      await cesdk.actions.run('product.switchArea', product.areas[0].id);
 
       // Update React state
       setAreaId(product.areas[0].id);
@@ -74,7 +82,7 @@ export default function App({ cesdk, children }: AppProps) {
   const handleAreaChange = async (newAreaId: string) => {
     if (!cesdk) return;
     setAreaId(newAreaId);
-    await switchArea(cesdk, newAreaId);
+    await cesdk.actions.run('product.switchArea', newAreaId);
   };
 
   const handleColorChange = async (newColor: ProductColor) => {
@@ -84,18 +92,31 @@ export default function App({ cesdk, children }: AppProps) {
 
     setColor(newColor);
 
-    // Update backdrops with new color
-    updateProductColor(cesdk, product, newColor);
+    // Swap backdrop images for the new color via the plugin's variable
+    // substitution action.
+    const enabledAreas = product.areas
+      .filter((area) => !area.disabled)
+      .map((area) => ({ id: area.id, mockup: area.mockup }));
+    await cesdk.actions.run(
+      'product.applyVariables',
+      { color: newColor.id },
+      enabledAreas
+    );
+
+    const scene = cesdk.engine.scene.get();
+    if (scene != null) {
+      cesdk.engine.block.setMetadata(scene, 'color', JSON.stringify(newColor));
+    }
 
     // Refresh view
-    await switchArea(cesdk, areaId);
+    await cesdk.actions.run('product.switchArea', areaId);
   };
 
   const handleExportRequest = async () => {
     if (!cesdk) return;
-    // Use the downloadDesignData action which handles
-    // exporting and downloading all product areas as PDFs and thumbnails
-    await cesdk.actions.run('downloadDesignData');
+    // Export every area to PDF + thumbnail plus the scene archive and
+    // trigger the downloads.
+    await downloadProductAssets(cesdk);
   };
 
   const handleAddToCart = (data: {

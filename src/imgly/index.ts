@@ -2,7 +2,7 @@
  * CE.SDK T-Shirt Designer - Initialization Module
  *
  * This module provides the main entry point for initializing the t-shirt designer.
- * Import and call `initProductEditor()` to configure a CE.SDK instance for t-shirt design.
+ * Import and call `initTShirtDesigner()` to configure a CE.SDK instance for t-shirt design.
  */
 
 import CreativeEditorSDK from '@cesdk/cesdk-js';
@@ -25,42 +25,14 @@ import {
 
 // Configuration
 import { ProductEditorConfig } from './config/plugin';
+import { ProductBackdrop } from './plugins/product-backdrop';
 
 // Exports for external use
 export { ProductEditorConfig } from './config/plugin';
+export { ProductBackdrop } from './plugins/product-backdrop';
 
 // Export types
-export type {
-  AreaConfig,
-  BackdropConfig,
-  MaskConfig,
-  ProductMetadata,
-  DesignUnit,
-  Source
-} from './types';
-
-// Export constants
-export {
-  BACKDROP_BLOCK_KIND,
-  MASK_BLOCK_KIND,
-  METADATA_KEYS,
-  ZOOM_PADDING
-} from './constants';
-
-// Export backdrop functions
-export {
-  createBackdrop,
-  updateBackdropImages,
-  showBackdrop,
-  clearBackdrops,
-  getPageBackdropConfig
-} from './backdrop';
-
-// Export mask functions
-export { setMaskConfig, updateMasks, clearMasks } from './mask';
-
-// Export page and scene functions
-export { createOrUpdateScene, getVisibleAreaId, switchArea } from './page';
+export type { ProductMetadata, DesignUnit, Source } from './types';
 
 /**
  * Initialize the CE.SDK T-Shirt Designer with a complete configuration.
@@ -73,6 +45,7 @@ export async function initTShirtDesigner(cesdk: CreativeEditorSDK) {
   // ============================================================================
 
   await cesdk.addPlugin(new ProductEditorConfig());
+  await cesdk.addPlugin(new ProductBackdrop());
 
   // ============================================================================
   // Asset Source Plugins
