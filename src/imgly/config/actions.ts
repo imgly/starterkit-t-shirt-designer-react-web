@@ -2,7 +2,7 @@
  * Actions Configuration - Override Default Actions and Add Custom Actions
  *
  * This file shows how to override CE.SDK's default actions with your own
- * implementations for the Product Editor starterkit.
+ * implementations. Actions are agnostic and work with the scene structure.
  *
  * ## Actions API
  *
@@ -38,8 +38,6 @@
  */
 
 import type CreativeEditorSDK from '@cesdk/cesdk-js';
-
-import { updateMasks, getPageMaskUrl } from '../mask';
 
 /**
  * Register actions and configure the navigation bar.
@@ -187,163 +185,5 @@ export function setupActions(cesdk: CreativeEditorSDK): void {
   //   const { id } = await response.json();
   //   console.log('Design saved with ID:', id);
   // });
-  // #endregion
-
-  // ============================================================================
-  // EXPORT ACTIONS
-  // Actions for multi-area export with mask swapping
-  // ============================================================================
-
-  // #region Export Design Data Action
-  // Exports all pages as blobs without downloading.
-  // Returns typed blobs for archive, PDFs, and thumbnails.
-  // Handles mask swapping for areas with non-rectangular shapes.
-  //
-  // @returns {Promise<{
-  //   archive: Blob,
-  //   pdfs: Record<string, Blob>,
-  //   thumbnails: Record<string, Blob>
-  // }>}
-  cesdk.actions.register(
-    'exportDesignData',
-    async (options?: { onProgress?: (progress: number) => void }) => {
-      const engine = cesdk.engine;
-      const onProgress = options?.onProgress;
-
-      // Save archive for resuming work later
-      const archive = await engine.scene.saveToArchive();
-
-      // Get all pages
-      const pages = engine.block.findByType('page');
-      const pdfs: Record<string, Blob> = {};
-      const thumbnails: Record<string, Blob> = {};
-
-      // Check if any page has exporting masks
-      const hasExportingMasks = pages.some(
-        (page) => getPageMaskUrl(engine, page, 'exporting') != null
-      );
-
-      // Switch to exporting masks if any exist
-      if (hasExportingMasks) {
-        updateMasks(engine, 'exporting');
-      }
-
-      // Export each page as PDF and thumbnail
-      for (let i = 0; i < pages.length; i++) {
-        const page = pages[i];
-        const areaId = engine.block.getName(page);
-
-        // Report progress (0-100 scale for export phase)
-        onProgress?.(Math.round((i / pages.length) * 100));
-
-        // Temporarily disable stroke for clean export
-        engine.block.setStrokeEnabled(page, false);
-
-        // Export PDF
-        pdfs[areaId] = await engine.block.export(page, {
-          mimeType: 'application/pdf'
-        });
-
-        // Export thumbnail (200x200)
-        thumbnails[areaId] = await engine.block.export(page, {
-          mimeType: 'image/png',
-          targetWidth: 200,
-          targetHeight: 200
-        });
-
-        // Re-enable stroke
-        engine.block.setStrokeEnabled(page, true);
-      }
-
-      // Report 100% when done
-      onProgress?.(100);
-
-      // Restore editing masks if we switched
-      if (hasExportingMasks) {
-        updateMasks(engine, 'editing');
-      }
-
-      return {
-        archive,
-        pdfs,
-        thumbnails
-      };
-    }
-  );
-  // #endregion
-
-  // #region Download Design Data Action
-  // Exports and downloads all pages as PDFs and thumbnails.
-  // Shows a loading dialog with progress:
-  // - 0-50%: Exporting design data
-  // - 50-100%: Downloading files
-  cesdk.actions.register('downloadDesignData', async () => {
-    // Show loading dialog
-    const dialog = cesdk.utils.showLoadingDialog({
-      title: 'Exporting Design',
-      message: 'Generating export files...',
-      progress: 0
-    });
-
-    try {
-      // Phase 1: Export (0-50%)
-      const result = (await cesdk.actions.run('exportDesignData', {
-        onProgress: (progress: number) => {
-          // Map 0-100 export progress to 0-50 dialog progress
-          dialog.updateProgress({ value: Math.round(progress / 2), max: 100 });
-        }
-      })) as {
-        archive: Blob;
-        pdfs: Record<string, Blob>;
-        thumbnails: Record<string, Blob>;
-      };
-
-      // Phase 2: Download (50-100%)
-      dialog.updateProgress({ value: 50, max: 100 });
-
-      // Count total files for download progress
-      const pdfEntries = Object.entries(result.pdfs);
-      const thumbnailEntries = Object.entries(result.thumbnails);
-      const totalFiles = 1 + pdfEntries.length + thumbnailEntries.length; // archive + pdfs + thumbnails
-      let downloadedFiles = 0;
-
-      const updateDownloadProgress = () => {
-        downloadedFiles++;
-        // Map downloaded files to 50-100 progress range
-        const downloadProgress = Math.round(
-          50 + (downloadedFiles / totalFiles) * 50
-        );
-        dialog.updateProgress({ value: downloadProgress, max: 100 });
-      };
-
-      // Download archive
-      await cesdk.utils.downloadFile(result.archive, 'application/zip');
-      updateDownloadProgress();
-
-      // Download PDFs
-      for (const [, blob] of pdfEntries) {
-        await cesdk.utils.downloadFile(blob, 'application/pdf');
-        updateDownloadProgress();
-      }
-
-      // Download thumbnails
-      for (const [, blob] of thumbnailEntries) {
-        await cesdk.utils.downloadFile(blob, 'image/png');
-        updateDownloadProgress();
-      }
-
-      // Show success
-      dialog.showSuccess({
-        title: 'Export Complete',
-        message: 'Your design files have been downloaded.'
-      });
-    } catch (error) {
-      dialog.showError({
-        title: 'Export Failed',
-        message: 'An error occurred while exporting your design.'
-      });
-      throw error;
-    }
-  });
   // #endregion
 }
