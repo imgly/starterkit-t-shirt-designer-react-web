@@ -5,7 +5,7 @@
  * Import and call `initTShirtDesigner()` to configure a CE.SDK instance for t-shirt design.
  */
 
-import CreativeEditorSDK from '@cesdk/cesdk-js';
+import type CreativeEditorSDK from '@cesdk/cesdk-js';
 
 import {
   BlurAssetSource,
