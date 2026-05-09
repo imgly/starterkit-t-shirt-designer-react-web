@@ -66,6 +66,9 @@ export function setupFeatures(cesdk: CreativeEditorSDK): void {
     // 'ly.img.text.list.ordered', /* Numbered list */
     // 'ly.img.text.advanced', /* Advanced text controls */
     // 'ly.img.text.background', /* Text background controls */
+    // 'ly.img.text.background.picker', /* Color picker body (hue/saturation, hex, RGB/CMYK) */
+    // 'ly.img.text.background.picker.opacity', /* Alpha/opacity slider */
+    // 'ly.img.text.background.library', /* Swatch library */
     // #endregion
 
     // ============================================================================
@@ -109,6 +112,9 @@ export function setupFeatures(cesdk: CreativeEditorSDK): void {
     'ly.img.blur' /* Blur button */,
     'ly.img.shadow' /* Shadow button */,
     // 'ly.img.shadow.color', /* Shadow color picker */
+    // 'ly.img.shadow.color.picker', /* Color picker body (hue/saturation, hex, RGB/CMYK) */
+    // 'ly.img.shadow.color.picker.opacity', /* Alpha/opacity slider */
+    // 'ly.img.shadow.color.library', /* Swatch library */
     // 'ly.img.shadow.offset', /* Shadow angle and distance */
     // 'ly.img.shadow.blur', /* Shadow blur radius */
     'ly.img.cutout' /* Cutout controls */,
@@ -190,10 +196,17 @@ export function setupFeatures(cesdk: CreativeEditorSDK): void {
     // #region Styling Features
     // 'ly.img.fill' /* Fill button and Fill Panel */,
     'ly.img.fill.color' /* Solid and gradient fill controls */,
+    // 'ly.img.fill.color.picker', /* Color picker body (hue/saturation, hex, RGB/CMYK) */
+    // 'ly.img.fill.color.picker.gradient', /* Gradient mode selector and stops editor */
+    // 'ly.img.fill.color.picker.opacity', /* Alpha/opacity slider */
+    // 'ly.img.fill.color.library', /* Swatch library */
     'ly.img.fill.image' /* Image fill controls and crop */,
     // 'ly.img.fill.video', /* Video fill, trim, volume, speed */
     'ly.img.stroke' /* Stroke controls (Color, Width) */,
     // 'ly.img.stroke.color', /* Stroke color picker */
+    // 'ly.img.stroke.color.picker', /* Color picker body (hue/saturation, hex, RGB/CMYK) */
+    // 'ly.img.stroke.color.picker.opacity', /* Alpha/opacity slider */
+    // 'ly.img.stroke.color.library', /* Swatch library */
     // 'ly.img.stroke.width', /* Stroke width input */
     // 'ly.img.stroke.style', /* Stroke style (dash) selector */
     // 'ly.img.stroke.position', /* Inner/center/outer selector */

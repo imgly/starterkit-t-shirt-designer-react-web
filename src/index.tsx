@@ -24,12 +24,10 @@ const config = {
   // Enable single page mode for t-shirt editing (Front/Back areas)
   featureFlags: {
     singlePageMode: true
-  }
+  },
 
-  // license: 'YOUR_LICENSE_KEY',
+  // Local assets for development
 
-  // Local assets
-  // baseURL: `/assets/`,
 };
 
 // ============================================================================
