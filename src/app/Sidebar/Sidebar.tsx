@@ -78,7 +78,7 @@ export function Sidebar({
       {/* Header */}
       <div className={styles.header}>
         <div>
-          <p className={styles.brand}>Apparell Essentials</p>
+          <p className={styles.brand}>Apparel Essentials</p>
           <h3 className={styles.productName}>{product.label}</h3>
         </div>
         <div className={styles.priceWrapper}>

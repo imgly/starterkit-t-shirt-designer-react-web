@@ -5,10 +5,11 @@
  * Import and call `initTShirtDesigner()` to configure a CE.SDK instance for t-shirt design.
  */
 
-import CreativeEditorSDK from '@cesdk/cesdk-js';
+import type CreativeEditorSDK from '@cesdk/cesdk-js';
 
 import {
   BlurAssetSource,
+  ImageColorsAssetSource,
   ColorPaletteAssetSource,
   CropPresetsAssetSource,
   DemoAssetSources,
@@ -52,6 +53,7 @@ export async function initTShirtDesigner(cesdk: CreativeEditorSDK) {
   // ============================================================================
 
   await cesdk.addPlugin(new BlurAssetSource());
+  await cesdk.addPlugin(new ImageColorsAssetSource());
   await cesdk.addPlugin(new ColorPaletteAssetSource());
   await cesdk.addPlugin(new CropPresetsAssetSource());
   await cesdk.addPlugin(new EffectsAssetSource());
