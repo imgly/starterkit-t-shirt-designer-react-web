@@ -32,6 +32,9 @@ import type CreativeEditorSDK from '@cesdk/cesdk-js';
  */
 export function setupFeatures(cesdk: CreativeEditorSDK): void {
   cesdk.feature.enable([
+    // #region Keyboard Shortcuts
+    'ly.img.keyboard.shortcuts' /* Enable keyboard shortcuts */,
+    // #endregion
     // ============================================================================
     // NAVIGATION FEATURES
     // Configure the top navigation bar visibility and controls
