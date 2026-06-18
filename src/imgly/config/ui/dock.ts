@@ -62,6 +62,7 @@ export function setupDock(cesdk: CreativeEditorSDK): void {
       label: 'component.library.elements',
       entries: [
         'ly.img.image',
+        'ly.img.text.presets',
         'ly.img.text',
         'ly.img.vector.shape',
         'ly.img.sticker'
@@ -94,7 +95,7 @@ export function setupDock(cesdk: CreativeEditorSDK): void {
       key: 'ly.img.text',
       icon: '@imgly/Text',
       label: 'libraries.ly.img.text.label',
-      entries: ['ly.img.text']
+      entries: ['ly.img.text.presets', 'ly.img.text']
     },
     {
       id: 'ly.img.assetLibrary.dock',
