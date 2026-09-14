@@ -14,7 +14,6 @@ import type CreativeEditorSDK from '@cesdk/cesdk-js';
 import App from './app/App';
 import styles from './app/App.module.css';
 
-
 // ============================================================================
 // Configuration
 // ============================================================================
