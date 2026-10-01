@@ -39,8 +39,6 @@ function TShirtDesigner() {
   const [cesdk, setCesdk] = useState<CreativeEditorSDK | null>(null);
 
   const handleInit = useCallback((sdk: CreativeEditorSDK) => {
-    // Debug access (remove in production)
-    (window as any).cesdk = sdk;
     setCesdk(sdk);
   }, []);
 

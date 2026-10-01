@@ -62,7 +62,7 @@ export default function App({ cesdk, children }: AppProps) {
         'product.setupScene',
         setupSceneOptions(product, defaultColor)
       );
-      storeProductMetadata(cesdk, product, defaultColor);
+      storeProductMetadata(cesdk.engine, product, defaultColor);
 
       // Switch to first area
       await cesdk.actions.run('product.switchArea', product.areas[0].id);
@@ -117,7 +117,7 @@ export default function App({ cesdk, children }: AppProps) {
     if (!cesdk) return;
     // Export every area to PDF + thumbnail plus the scene archive and
     // trigger the downloads.
-    await downloadProductAssets(cesdk);
+    await downloadProductAssets(cesdk.engine);
   };
 
   const handleAddToCart = (data: {
