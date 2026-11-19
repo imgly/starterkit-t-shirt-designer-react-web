@@ -119,7 +119,7 @@ export function setupActions(cesdk: CreativeEditorSDK): void {
   // #region Upload File Action
   // Handle local file uploads by creating blob URLs
   // This integrates with CE.SDK's upload asset sources
-  cesdk.actions.register('uploadFile', (file, onProgress, context) => {
+  cesdk.actions.register('uploadFile', (file, _onProgress, context) => {
     return cesdk.utils.localUpload(file, context);
   });
   // #endregion
