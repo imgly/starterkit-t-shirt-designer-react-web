@@ -232,7 +232,7 @@ export function setupScene(
 
   const usedPages = areas.map((area) => {
     const existing = engine.block.findByName(area.id);
-    const page = existing.length ? existing[0] : createPage(engine);
+    const page = existing.length ? existing[0]! : createPage(engine);
     setupPage(engine, page, area);
     applyPageShape(
       engine,
